@@ -1,3 +1,6 @@
+const dns = require("node:dns");
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
+
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const express = require("express");
 const dotenv = require("dotenv");
@@ -5,7 +8,7 @@ const cors = require("cors");
 const app = express();
 
 const uri =
-  "mongodb+srv://pet-nest:GlUTpYzfwVUtEo9S@cluster0.l69kqn7.mongodb.net/?appName=Cluster0";
+  "mongodb+srv://pet-nest:QklDNB7dhDN7zLcD@cluster0.l69kqn7.mongodb.net/?appName=Cluster0";
 app.use(cors());
 app.use(express.json());
 
@@ -25,8 +28,15 @@ async function run() {
     const db = client.db("petNest");
     const petCollection = db.collection("allPets");
 
+    app.post("/all-pets", async (req, res) => {
+      const petData = req.body;
+      console.log(petData);
+      const result = await petCollection.insertOne(petData);
+      res.json(result);
+    });
+
     // All Pet information get on this..
-    app.get("/pet", async (req, res) => {
+    app.get("/all-pets", async (req, res) => {
       const result = await petCollection.find().toArray();
       res.json(result);
     });
