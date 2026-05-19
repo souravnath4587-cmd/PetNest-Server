@@ -1,7 +1,7 @@
 const dns = require("node:dns");
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
@@ -27,6 +27,37 @@ async function run() {
     await client.connect();
     const db = client.db("petNest");
     const petCollection = db.collection("allPets");
+    const adoptCollection = db.collection("adoptPet");
+
+    app.get("/my-request", async (req, res) => {
+      const result = await adoptCollection.find().toArray();
+      res.json(result);
+    });
+
+    app.post("/all-pets/:id", async (req, res) => {
+      const adoptData = req.body;
+      console.log(adoptData);
+      const result = await adoptCollection.insertOne(adoptData);
+      res.json(result);
+    });
+
+    app.get("/all-pets/:id", async (req, res) => {
+      const { id } = req.params;
+
+      let query;
+      if (ObjectId.isValid(id)) {
+        query = {
+          $or: [{ _id: id }, { _id: new ObjectId(id) }],
+        };
+      } else {
+        query = {
+          _id: id,
+        };
+      }
+
+      const result = await petCollection.findOne(query);
+      res.json(result);
+    });
 
     app.post("/all-pets", async (req, res) => {
       const petData = req.body;
