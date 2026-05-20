@@ -28,6 +28,45 @@ async function run() {
     const db = client.db("petNest");
     const petCollection = db.collection("allPets");
     const adoptCollection = db.collection("adoptPet");
+    const myListingCollection = db.collection("myListing");
+
+    app.patch("/my-pets/:id", async (req, res) => {
+      const { id } = req.params;
+      const updateData = req.body;
+      console.log(updateData);
+      const result = await petCollection.updateOne(
+        {
+          _id: id,
+        },
+        { $set: updateData },
+      );
+      res.json(result);
+    });
+
+    // app.get("/my-listing", async (req, res) => {
+    //   const result = await myListingCollection.find().toArray();
+    //   res.json(result);
+    // });
+
+    // app.post("/my-listing", async (req, res) => {
+    //   const myListingData = req.body;
+    //   console.log(myListingData);
+    //   const result = await myListingCollection.insertOne(myListingData);
+    //   res.json();
+    // });
+
+    app.delete("/my-request/:id", async (req, res) => {
+      const { id } = req.params;
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).send({
+          message: "Invalid ID",
+        });
+      }
+      const result = await adoptCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.json(result);
+    });
 
     app.get("/my-request", async (req, res) => {
       const result = await adoptCollection.find().toArray();
