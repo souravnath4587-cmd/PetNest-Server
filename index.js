@@ -30,6 +30,33 @@ async function run() {
     const adoptCollection = db.collection("adoptPet");
     const myListingCollection = db.collection("myListing");
 
+    app.patch("/my-request/:id", async (req, res) => {
+      const { id } = req.params;
+      const updatedStatusFromAdopt = req.body;
+      const filter = { petId: id };
+      console.log(filter);
+      const updatedDoc = {
+        $set: updatedStatusFromAdopt,
+      };
+      const result = await adoptCollection.updateOne(filter, updatedDoc);
+      res.json(result);
+    });
+
+    // status changing of all-pets document:
+    app.patch("/all-pets/:id", async (req, res) => {
+      const { id } = req.params;
+      const updatedStatus = req.body;
+      console.log(id, updatedStatus);
+
+      const filter = { _id: id };
+      const updatedDoc = {
+        $set: updatedStatus,
+      };
+      const result = await petCollection.updateOne(filter, updatedDoc);
+      res.json(result);
+    });
+
+    // update my-pets collection add adopt data.
     app.patch("/my-pets/:id", async (req, res) => {
       const { id } = req.params;
       const updateData = req.body;
