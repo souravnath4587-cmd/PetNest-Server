@@ -28,7 +28,16 @@ async function run() {
     const db = client.db("petNest");
     const petCollection = db.collection("allPets");
     const adoptCollection = db.collection("adoptPet");
-    const myListingCollection = db.collection("myListing");
+    // const myListingCollection = db.collection("myListing");
+
+    app.delete("/all-pets/:id", async (req, res) => {
+      const { id } = req.params;
+      const query = {
+        _id: id,
+      };
+      const result = await petCollection.deleteOne(query);
+      res.json(result);
+    });
 
     app.patch("/my-request/:id", async (req, res) => {
       const { id } = req.params;
