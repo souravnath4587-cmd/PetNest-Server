@@ -30,6 +30,18 @@ async function run() {
     const adoptCollection = db.collection("adoptPet");
     // const myListingCollection = db.collection("myListing");
 
+    app.patch("/all-pets/:id", async (req, res) => {
+      const { id } = req.params;
+      const updateData = req.body;
+      const result = await petCollection.updateOne(
+        {
+          _id: id,
+        },
+        { $set: updateData },
+      );
+      res.json(result);
+    });
+
     app.delete("/all-pets/:id", async (req, res) => {
       const { id } = req.params;
       const query = {
