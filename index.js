@@ -30,16 +30,27 @@ async function run() {
     const adoptCollection = db.collection("adoptPet");
     // const myListingCollection = db.collection("myListing");
 
-    app.patch("/all-pets/:id", async (req, res) => {
-      const { id } = req.params;
-      const updateData = req.body;
-      const result = await petCollection.updateOne(
-        {
-          _id: id,
-        },
-        { $set: updateData },
-      );
-      res.json(result);
+    // Search and sortBySpecies :
+    app.get("/all-pets", async (req, res) => {
+      const search = req.query.search || "";
+      const speciesData = req.query.sortBySpecies || "";
+
+      const query = {
+        $and: [
+          {
+            $or: [
+              { PetName: { $regex: search, $options: "i" } },
+              { breed: { $regex: search, $options: "i" } },
+            ],
+          },
+          ...(speciesData
+            ? [{ species: { $regex: speciesData, $options: "i" } }]
+            : []),
+        ],
+      };
+
+      const result = await petCollection.find(query).toArray();
+      res.send(result);
     });
 
     app.delete("/all-pets/:id", async (req, res) => {
