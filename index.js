@@ -5,10 +5,11 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
+const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
 const app = express();
 
 const uri =
-  "mongodb+srv://pet-nest:QklDNB7dhDN7zLcD@cluster0.l69kqn7.mongodb.net/?appName=Cluster0";
+  "mongodb+srv://pet-nest:bKBik1iLP91mwjvW@cluster0.l69kqn7.mongodb.net/?appName=Cluster0";
 app.use(cors());
 app.use(express.json());
 
@@ -21,6 +22,52 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+
+const JWKS = createRemoteJWKSet(new URL("http://localhost:3000/api/auth/jwks"));
+
+const varifyToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ message: "unauthorize." });
+  }
+  const token = authHeader.split(" ")[1];
+  console.log(token);
+
+  if (!token) {
+    return res.status(401).json({ message: "unauthorize." });
+  }
+  try {
+    const { payload } = await jwtVerify(token, JWKS);
+    console.log(payload);
+    next();
+  } catch (error) {
+    return res.status(403).json({ message: "jwt is not working..." });
+  }
+};
+
+// const JWKS = createRemoteJWKSet(new URL("http://localhost:3000/api/auth/jwks"));
+
+// const verifyToken = async (req, res, next) => {
+//   const authHeader = req.headers.authorization;
+//   const token = authHeader.split(" ")[1];
+//   console.log(token);
+
+//   if (!authHeader) {
+//     return res.status(401).json({ message: "unauthorize" });
+//   }
+
+//   if (!token) {
+//     return res.status(401).json({ message: "unauthorize" });
+//   }
+//   try {
+//     const { payload } = await jwtVerify(token, JWKS);
+//     console.log(payload);
+//     next();
+//   } catch (error) {
+//     return res.status(403).json({ message: "Forbidden" });
+//   }
+// };
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -127,6 +174,11 @@ async function run() {
       res.json(result);
     });
 
+    app.get("/feature", async (req, res) => {
+      const result = await petCollection.find().limit(6).toArray();
+      res.json(result);
+    });
+
     app.get("/my-request", async (req, res) => {
       const result = await adoptCollection.find().toArray();
       res.json(result);
@@ -139,7 +191,7 @@ async function run() {
       res.json(result);
     });
 
-    app.get("/all-pets/:id", async (req, res) => {
+    app.get("/all-pets/:id", varifyToken, async (req, res) => {
       const { id } = req.params;
 
       let query;
