@@ -2,18 +2,18 @@ const dns = require("node:dns");
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const dotenv = require("dotenv").config();
 const express = require("express");
-const dotenv = require("dotenv");
 const cors = require("cors");
 const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
 const app = express();
 
-const uri =
-  "mongodb+srv://pet-nest:bKBik1iLP91mwjvW@cluster0.l69kqn7.mongodb.net/?appName=Cluster0";
+const uri = process.env.MONGODB_URI;
+
 app.use(cors());
 app.use(express.json());
 
-const PORT = 5000;
+const PORT = process.env.PORT;
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -23,7 +23,9 @@ const client = new MongoClient(uri, {
   },
 });
 
-const JWKS = createRemoteJWKSet(new URL("http://localhost:3000/api/auth/jwks"));
+const JWKS = createRemoteJWKSet(
+  new URL(`${process.env.CLIENT_URL}/api/auth/jwks`),
+);
 
 const varifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -48,7 +50,7 @@ const varifyToken = async (req, res, next) => {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
     const db = client.db("petNest");
     const petCollection = db.collection("allPets");
     const adoptCollection = db.collection("adoptPet");
@@ -209,7 +211,7 @@ async function run() {
     });
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
     );
