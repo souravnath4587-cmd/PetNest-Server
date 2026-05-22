@@ -45,29 +45,6 @@ const varifyToken = async (req, res, next) => {
   }
 };
 
-// const JWKS = createRemoteJWKSet(new URL("http://localhost:3000/api/auth/jwks"));
-
-// const verifyToken = async (req, res, next) => {
-//   const authHeader = req.headers.authorization;
-//   const token = authHeader.split(" ")[1];
-//   console.log(token);
-
-//   if (!authHeader) {
-//     return res.status(401).json({ message: "unauthorize" });
-//   }
-
-//   if (!token) {
-//     return res.status(401).json({ message: "unauthorize" });
-//   }
-//   try {
-//     const { payload } = await jwtVerify(token, JWKS);
-//     console.log(payload);
-//     next();
-//   } catch (error) {
-//     return res.status(403).json({ message: "Forbidden" });
-//   }
-// };
-
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -102,9 +79,18 @@ async function run() {
 
     app.delete("/all-pets/:id", async (req, res) => {
       const { id } = req.params;
-      const query = {
-        _id: id,
-      };
+      let query;
+      if (ObjectId.isValid(id)) {
+        query = {
+          $or: [{ _id: id }, { _id: new ObjectId(id) }],
+        };
+      } else {
+        query = {
+          _id: id,
+        };
+      }
+      console.log(query);
+
       const result = await petCollection.deleteOne(query);
       res.json(result);
     });
@@ -184,7 +170,7 @@ async function run() {
       res.json(result);
     });
 
-    app.post("/all-pets/:id", async (req, res) => {
+    app.post("/all-pets/:id", varifyToken, async (req, res) => {
       const adoptData = req.body;
       console.log(adoptData);
       const result = await adoptCollection.insertOne(adoptData);
@@ -209,7 +195,7 @@ async function run() {
       res.json(result);
     });
 
-    app.post("/all-pets", async (req, res) => {
+    app.post("/all-pets", varifyToken, async (req, res) => {
       const petData = req.body;
       console.log(petData);
       const result = await petCollection.insertOne(petData);
